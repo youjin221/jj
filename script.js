@@ -1,47 +1,35 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// 캔버스 사이즈
-canvas.width = 400;
-canvas.height = 600;
-
-// 플레이어 바
+// 바 정보
 let catcher = {
   x: canvas.width / 2 - 30,
   y: canvas.height - 40,
   width: 60,
-  height: 15,
-  speed: 5
+  height: 15
 };
 
-// 하트 배열
 let hearts = [];
 let score = 0;
 
-// 키 입력 처리
-let keys = {
-  left: false,
-  right: false
-};
+// 터치 또는 마우스로 바 움직이기
+function moveCatcher(x) {
+  const canvasLeft = canvas.getBoundingClientRect().left;
+  catcher.x = x - canvasLeft - catcher.width / 2;
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft") keys.left = true;
-  if (e.key === "ArrowRight") keys.right = true;
-});
-document.addEventListener("keyup", (e) => {
-  if (e.key === "ArrowLeft") keys.left = false;
-  if (e.key === "ArrowRight") keys.right = false;
-});
+  // 화면 밖으로 못 나가게
+  if (catcher.x < 0) catcher.x = 0;
+  if (catcher.x + catcher.width > canvas.width) {
+    catcher.x = canvas.width - catcher.width;
+  }
+}
 
-// ✅ 터치 또는 마우스 이동으로 바 위치 조절
+// 터치 & 마우스 이벤트
 canvas.addEventListener("touchmove", (e) => {
-  const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
-  catcher.x = touchX - catcher.width / 2;
+  moveCatcher(e.touches[0].clientX);
 });
-
 canvas.addEventListener("mousemove", (e) => {
-  const mouseX = e.clientX - canvas.getBoundingClientRect().left;
-  catcher.x = mouseX - catcher.width / 2;
+  moveCatcher(e.clientX);
 });
 
 // 하트 생성
@@ -50,23 +38,13 @@ function spawnHeart() {
     x: Math.random() * (canvas.width - 30),
     y: -30,
     size: 30,
-    // ✅ 점수가 높아질수록 하트 속도 증가
-    speed: 2 + Math.random() * 2 + score * 0.05
+    speed: 4
   });
 }
 setInterval(spawnHeart, 1000);
 
 // 업데이트
 function update() {
-  // 키보드 바 움직임
-  if (keys.left) catcher.x -= catcher.speed;
-  if (keys.right) catcher.x += catcher.speed;
-
-  // 벽 제한
-  if (catcher.x < 0) catcher.x = 0;
-  if (catcher.x + catcher.width > canvas.width) catcher.x = canvas.width - catcher.width;
-
-  // 하트 이동 및 충돌 검사
   hearts = hearts.filter(h => {
     h.y += h.speed;
 
@@ -92,7 +70,7 @@ function draw() {
     ctx.fill();
   });
 
-  // 바 (플레이어)
+  // 바
   ctx.fillStyle = "red";
   ctx.fillRect(catcher.x, catcher.y, catcher.width, catcher.height);
 
@@ -102,11 +80,10 @@ function draw() {
   ctx.fillText("Score: " + score, 10, 30);
 }
 
-// 게임 루프
+// 루프
 function gameLoop() {
   update();
   draw();
   requestAnimationFrame(gameLoop);
 }
-
 gameLoop();
